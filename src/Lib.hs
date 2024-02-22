@@ -58,7 +58,7 @@ getOperator ADDITION = Right (+)
 getOperator SUBTRACTION = Right (-)
 getOperator MULTIPLICATION = Right (*)
 getOperator DIVISION = Right (/)
--- getOperator EXPONENT = Right (**)
+getOperator EXPONENT = Right (\ a b -> a ^^ floor b)
 getOperator other = Left $ "Not supported for operation " <> show other
 
 splitTokens :: String -> [String]
@@ -111,7 +111,9 @@ evaluateExprAux array (COMPOSITE op e1 e2) = do
   operation <- getOperator op
   res1 <- evaluateExprAux array e1
   res2 <- evaluateExprAux array e2
-  Right $ operation res1 res2
+  if (op == EXPONENT && res2 - fromInteger (floor res2) > 0)
+    then Left "Exponent cannot be a decimal number"
+    else Right $ operation res1 res2
 
 evaluateExpr :: Vector Decimal -> String -> Either String Decimal
 evaluateExpr array exprStr = do
@@ -120,8 +122,8 @@ evaluateExpr array exprStr = do
 
 someFunc :: IO ()
 someFunc = do
-  let exprStr = "(s5+s2)*(s3-s1)/((s4*s4+s3)*(s8/s2))"
-      vals = empty `snoc` 1 `snoc` 2 `snoc` 3 `snoc` 4 `snoc` 5 `snoc` 6 `snoc` 7 `snoc` 8
+  let exprStr = "(s5+s2)*(s3-s1)/((s4^s2+s3)*(s8/s2))"
+      vals = empty `snoc` 1 `snoc` 2.1 `snoc` 3 `snoc` 4 `snoc` 5 `snoc` 6 `snoc` 7 `snoc` 8
       res = evaluateExpr vals exprStr
   print res
   return ()
